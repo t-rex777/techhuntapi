@@ -1,4 +1,4 @@
-const User = require("../user/model");
+const User = require("./model");
 const { extend, concat } = require("lodash");
 
 // Read

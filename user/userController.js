@@ -36,26 +36,6 @@ exports.getUser = async (req, res) => {
   }
 };
 
-exports.getCartItem = async (req, res) => {
-  try {
-    let user = await User.findById(req.userId).populate("cart.item");
-    return res.send(user.cart);
-  } catch (error) {
-    res.status(400).json({
-      message: error.message,
-    });
-  }
-};
-exports.getWishlistItem = async (req, res) => {
-  try {
-    let user = await User.findById(req.userId).populate("wishlist");
-    return res.send(user.wishlist);
-  } catch (error) {
-    res.status(400).json({
-      message: error.message,
-    });
-  }
-};
 
 // Create
 exports.signUp = async (req, res) => {
@@ -155,49 +135,6 @@ exports.createAccessToken = (req, res) => {
   }
 };
 
-exports.createCartItem = async (req, res) => {
-  try {
-    let user = await User.findById(req.userId);
-    let { cartItemId } = req.params;
-    user = extend(user, {
-      cart: concat(user.cart, { item: cartItemId, quantity: 1 }), //update quantity
-    });
-    user.save((err, updatedUser) => {
-      if (err) {
-        return res.status(400).json({
-          message: err.message,
-        });
-      }
-      return res.json(updatedUser.cart);
-    });
-  } catch (error) {
-    res.status(400).json({
-      message: error.message,
-    });
-  }
-};
-
-exports.createWishlistItem = async (req, res) => {
-  try {
-    let user = await User.findById(req.userId);
-    let { wishlistId } = req.params;
-    user = extend(user, {
-      wishlist: concat(user.wishlist, wishlistId),
-    });
-    user.save((err, updatedUser) => {
-      if (err) {
-        return res.status(400).json({
-          message: err.message,
-        });
-      }
-      return res.json(updatedUser.wishlist);
-    });
-  } catch (error) {
-    res.status(400).json({
-      message: error.message,
-    });
-  }
-};
 
 //Update
 exports.updateUser = async (req, res) => {
@@ -220,30 +157,7 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-exports.updateCartItem = async (req, res) => {
-  try {
-    let user = await User.findById(req.userId);
-    let { cartItemId } = req.params;
-    let { quantity } = req.body;
-    user.cart.forEach((data) => {
-      if (data.item == cartItemId) {
-        data.quantity = quantity;
-      }
-    });
-    user.save((err, updatedUser) => {
-      if (err) {
-        return res.status(400).json({
-          message: err.message,
-        });
-      }
-      return res.json(updatedUser.cart);
-    });
-  } catch (error) {
-    res.status(400).json({
-      message: error.message,
-    });
-  }
-};
+
 
 // Delete
 exports.deleteUser = async (req, res) => {
@@ -255,58 +169,6 @@ exports.deleteUser = async (req, res) => {
           message: "user didn't delete!",
         });
       }
-    });
-  } catch (error) {
-    res.status(400).json({
-      message: error.message,
-    });
-  }
-};
-
-exports.deleteCartItem = async (req, res) => {
-  try {
-    const user = await User.findById(req.userId);
-    const { cartItemId } = req.params;
-    let finalCartItems = [];
-    user.cart.forEach((data) => {
-      if (data.item != cartItemId) {
-        finalCartItems.unshift(data);
-      }
-    });
-    user.cart = finalCartItems;
-    user.save((err, updatedUser) => {
-      if (err) {
-        return res.status(400).json({
-          message: err.message,
-        });
-      }
-      return res.json(updatedUser.cart);
-    });
-  } catch (error) {
-    res.status(400).json({
-      message: error.message,
-    });
-  }
-};
-
-exports.deleteWishlistItem = async (req, res) => {
-  try {
-    const user = await User.findById(req.userId);
-    const { wishlistItemId } = req.params;
-    let finalWishlistItems = [];
-    user.wishlist.forEach((data) => {
-      if (data.item != wishlistItemId) {
-        finalWishlistItems.unshift(data);
-      }
-    });
-    user.wishlist = finalWishlistItems;
-    user.save((err, updatedUser) => {
-      if (err) {
-        return res.status(400).json({
-          message: err.message,
-        });
-      }
-      return res.json(updatedUser.cart);
     });
   } catch (error) {
     res.status(400).json({

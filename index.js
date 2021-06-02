@@ -22,14 +22,11 @@ mongoose.connect(uri,
 
 // routes
 const productRoutes = require("./product/routes");
-const cartRoutes = require("./cart/routes");
-const wishlistRoutes = require("./wishlist/routes");
 const userRoutes = require("./user/routes");
 
 // API
 app.use("/api", productRoutes);
-// app.use("/api", cartRoutes);
-// app.use("/api", wishlistRoutes);
+
 app.use("/api", userRoutes);
 
 
