@@ -1,28 +1,39 @@
 const mongoose = require("mongoose");
+const { createHmac } = require("crypto");
 
-const userSchema = new mongoose.Schema({
-  name : {
-    type: String,
-    required : true,
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+    },
+    encrypted_password: {
+      type: String,
+      required: true,
+    },
+    cart: [
+      {
+        _id: false,
+        item: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+        },
+        quantity: Number,
+      },
+    ],
+    wishlist: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    ],
   },
-  email : {
-    type: String,
-    required : true
-  },
-  encrypted_password : {
-    type: String,
-    required : true
-  },
-  cart : [{
-    type : mongoose.Schema.Types.ObjectId,
-    ref : "Product",
-    quantity:Number
-  }],
-   wishlist : [{
-    type : mongoose.Schema.Types.ObjectId,
-    ref : "Product"
-  }],
-},{timestamps:true});
+  { timestamps: true }
+);
 
 userSchema
   .virtual("password")
@@ -37,13 +48,13 @@ userSchema
 userSchema.methods = {
   securePassword: function (plainPassword) {
     if (!plainPassword) {
-      return;
+      return "";
     }
     try {
-      const secret = process.env['USER_SECRET'];
+      const secret = process.env.USER_SECRET;
       return createHmac("sha256", secret).update(plainPassword).digest("hex");
     } catch (error) {
-      return;
+      return "";
     }
   },
   authenticate: function (plainPassword) {
@@ -51,5 +62,4 @@ userSchema.methods = {
   },
 };
 
-
-module.exports = mongoose.model("User",userSchema);
+module.exports = mongoose.model("User", userSchema);

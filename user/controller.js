@@ -1,6 +1,6 @@
 const User = require("./model");
 const jwt = require("jsonwebtoken");
-const {extend,concat} = require("lodash");
+const { extend, concat } = require("lodash");
 
 //  authorization
 exports.authorizeToken = async (req, res, next) => {
@@ -25,10 +25,9 @@ exports.authorizeToken = async (req, res, next) => {
   }
 };
 
-
 exports.getUser = async (req, res) => {
   try {
-    const user = await User.findById(req.userId)
+    const user = await User.findById(req.userId);
     return res.send(user);
   } catch (error) {
     res.status(400).json({
@@ -37,26 +36,26 @@ exports.getUser = async (req, res) => {
   }
 };
 
-exports.getCartItem = async(req,res)=>{
-  try{
-    let user = await User.findById(req.userId);
-    return res.send(user.cart)
-  }catch(error){
+exports.getCartItem = async (req, res) => {
+  try {
+    let user = await User.findById(req.userId).populate("cart.item");
+    return res.send(user.cart);
+  } catch (error) {
     res.status(400).json({
-      message : error.message
-    })
+      message: error.message,
+    });
   }
-}
-exports.getWishlistItem = async(req,res)=>{
-  try{
-    let user = await User.findById(req.userId);
-    return res.send(user.wishlist)
-  }catch(error){
+};
+exports.getWishlistItem = async (req, res) => {
+  try {
+    let user = await User.findById(req.userId).populate("wishlist");
+    return res.send(user.wishlist);
+  } catch (error) {
     res.status(400).json({
-      message : error.message
-    })
+      message: error.message,
+    });
   }
-}
+};
 
 // Create
 exports.signUp = async (req, res) => {
@@ -84,35 +83,32 @@ exports.signIn = async (req, res) => {
     const { email, password } = user;
     const userEmail = email;
 
-    await User.findOne({ email: userEmail })
-      .populate("cart")
-      .populate("wishlist")
-      .exec((err, user) => {
-        if (err || user === null) {
-          return res.status(400).json({
-            message: "user does not exists!",
-          });
-        } else if (!user.authenticate(password)) {
-          return res.status(401).json({
-            message: "please enter the correct password!",
-          });
+    await User.findOne({ email: userEmail }).exec((err, user) => {
+      if (err || user === null) {
+        return res.status(400).json({
+          message: "user does not exists!",
+        });
+      } else if (!user.authenticate(password)) {
+        return res.status(401).json({
+          message: "please enter the correct password!",
+        });
+      }
+      const accessToken = jwt.sign(
+        { userId: user._id },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+          expiresIn: "15m",
         }
-        const accessToken = jwt.sign(
-          { userId: user._id },
-          process.env['ACCESS_TOKEN_SECRET'],
-          {
-            expiresIn: "15m",
-          }
-        );
-        const refreshToken = jwt.sign(
-          { userId: user._id },
-          process.env['REFRESH_TOKEN_SECRET'],
-          {
-            expiresIn: "7d",
-          }
-        );
-        res.json({ user, accessToken, refreshToken });
-      });
+      );
+      const refreshToken = jwt.sign(
+        { userId: user._id },
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+          expiresIn: "7d",
+        }
+      );
+      res.json({ user, accessToken, refreshToken });
+    });
   } catch (error) {
     res.status(400).json({
       message: error.message,
@@ -135,20 +131,20 @@ exports.createAccessToken = (req, res) => {
     const oldRefreshToken = req.headers["refresh-token"].split(" ")[1];
     const { userId } = jwt.verify(
       oldRefreshToken,
-      process.env['REFRESH_TOKEN_SECRET']
+      process.env.REFRESH_TOKEN_SECRET
     );
     const refreshToken = jwt.sign(
       { userId: userId },
-      process.env['REFRESH_TOKEN_SECRET'],
+      process.env.REFRESH_TOKEN_SECRET,
       {
         expiresIn: "7d",
       }
     );
     const accessToken = jwt.sign(
       { userId: userId },
-      process.env['ACCESS_TOKEN_SECRET'],
+      process.env.ACCESS_TOKEN_SECRET,
       {
-        expiresIn: "15m",
+        expiresIn: "1d",
       }
     );
     res.json({ accessToken, refreshToken });
@@ -159,56 +155,56 @@ exports.createAccessToken = (req, res) => {
   }
 };
 
-exports.createCartItem = async(req,res)=>{
-  try{
+exports.createCartItem = async (req, res) => {
+  try {
     let user = await User.findById(req.userId);
-    let {cartItemId} = req.params;
-    user = extend(user,{
-      cart:concat(user.cart,cartItemId) //update quantity
-    })
-    user.save((err,updatedUser)=>{
-      if(err){
+    let { cartItemId } = req.params;
+    user = extend(user, {
+      cart: concat(user.cart, { item: cartItemId, quantity: 1 }), //update quantity
+    });
+    user.save((err, updatedUser) => {
+      if (err) {
         return res.status(400).json({
-          message : err.message
-        })
+          message: err.message,
+        });
       }
-      return res.json(user.cart)
-    })
-  }catch(error){
+      return res.json(updatedUser.cart);
+    });
+  } catch (error) {
     res.status(400).json({
-      message : error.message
-    })
+      message: error.message,
+    });
   }
-} 
+};
 
-exports.createWishlistItem = async(req,res)=>{
-  try{
+exports.createWishlistItem = async (req, res) => {
+  try {
     let user = await User.findById(req.userId);
-    let {cwishlistItemId} = req.params;
-    user = extend(user,{
-      wishlist:concat(user.wishlist,wishlistItemId)
-    })
-        user.save((err,updatedUser)=>{
-      if(err){
+    let { wishlistId } = req.params;
+    user = extend(user, {
+      wishlist: concat(user.wishlist, wishlistId),
+    });
+    user.save((err, updatedUser) => {
+      if (err) {
         return res.status(400).json({
-          message : err.message
-        })
+          message: err.message,
+        });
       }
-      return res.json(user.wishlist)
-    })
-  }catch(error){
+      return res.json(updatedUser.wishlist);
+    });
+  } catch (error) {
     res.status(400).json({
-      message : error.message
-    })
+      message: error.message,
+    });
   }
-}
+};
 
 //Update
 exports.updateUser = async (req, res) => {
   try {
     let updatedUser = req.body;
-    let user = await User.findById(req.userId)
-    updatedUser = await extend(user, updatedUser);
+    let user = await User.findById(req.userId);
+    updatedUser = extend(user, updatedUser);
     updatedUser.save((err, updatedUser) => {
       if (err) {
         return res.status(400).json({
@@ -224,39 +220,35 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-exports.updateCartItem = async(req,res)=>{
-  try{
+exports.updateCartItem = async (req, res) => {
+  try {
     let user = await User.findById(req.userId);
-    let cartItemId = req.params;
-    let cartQuantity = req.body;
-
-  // user.cart.find()
-
-    user = extend(user,{
-      cart:concat(user.cart,cartItemId)
-    })
-    user.save((err,updatedUser)=>{
-      if(err){
-        return res.status(400).json({
-          message : err.message
-        })
+    let { cartItemId } = req.params;
+    let { quantity } = req.body;
+    user.cart.forEach((data) => {
+      if (data.item == cartItemId) {
+        data.quantity = quantity;
       }
-      return res.json(user.cart)
-    })
-  }catch(error){
+    });
+    user.save((err, updatedUser) => {
+      if (err) {
+        return res.status(400).json({
+          message: err.message,
+        });
+      }
+      return res.json(updatedUser.cart);
+    });
+  } catch (error) {
     res.status(400).json({
-      message : error.message
-    })
+      message: error.message,
+    });
   }
-}
-
-
-
+};
 
 // Delete
 exports.deleteUser = async (req, res) => {
   try {
-    const user = await User.findById(req.userId)
+    const user = await User.findById(req.userId);
     user.deleteOne((err, user) => {
       if (err) {
         return res.status(400).json({
@@ -271,3 +263,54 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+exports.deleteCartItem = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    const { cartItemId } = req.params;
+    let finalCartItems = [];
+    user.cart.forEach((data) => {
+      if (data.item != cartItemId) {
+        finalCartItems.unshift(data);
+      }
+    });
+    user.cart = finalCartItems;
+    user.save((err, updatedUser) => {
+      if (err) {
+        return res.status(400).json({
+          message: err.message,
+        });
+      }
+      return res.json(updatedUser.cart);
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+exports.deleteWishlistItem = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    const { wishlistItemId } = req.params;
+    let finalWishlistItems = [];
+    user.wishlist.forEach((data) => {
+      if (data.item != wishlistItemId) {
+        finalWishlistItems.unshift(data);
+      }
+    });
+    user.wishlist = finalWishlistItems;
+    user.save((err, updatedUser) => {
+      if (err) {
+        return res.status(400).json({
+          message: err.message,
+        });
+      }
+      return res.json(updatedUser.cart);
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};

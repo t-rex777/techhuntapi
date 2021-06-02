@@ -1,70 +1,90 @@
-const Cart = require("./model");
-const { extend , union} = require("lodash");
+const User = require("../user/model");
+const { extend, concat } = require("lodash");
 
-exports.getCartItemById = async (req, res, next, cartItemId) => {
-  const cartItem = await Cart.findById(cartItemId);
-  req.cartItem = cartItem;
-  next();
-}
-
-exports.getOneCartItem = (req, res) => {
-  const { cartItem } = req;
-  console.log(cartItem);
-  return res.json( cartItem );
-}
-
-exports.getCartItems = async (req, res) => {
+// Read
+exports.getCartItem = async (req, res) => {
   try {
-    const cartItems = await Cart.find({});
-    return res.json( cartItems )
-  }
-  catch (err) {
-    return res.status(400).json({
-      success: "false",
-      error: err.message
-    })
-  }
-}
-
-exports.createCartItem = (req, res) => {
-
-  const newCartItem = new Cart(req.body)
-  console.log( newCartItem )
-  newCartItem.save((err, cart) => {
-    if (err) {
-      return res.status(400).json({
-        error: "Failed to add to cart",
-      });
-    }
-    res.json({ cart });
-  });
-}
-
-exports.updateCartItem = async (req, res) => {
-  const updatedCartItem = req.body;
-  let { cartItem } = req;
-  cartItem = extend(cartItem, updatedCartItem);
-  try {
-    cartItem = await cartItem.save();
-    res.json(cartItem)
-  } catch (err) {
+    let user = await User.findById(req.userId).populate("cart.item");
+    return res.send(user.cart);
+  } catch (error) {
     res.status(400).json({
-      success: "false",
-      error: err.message
-    })
-  }
-}
-
-exports.deleteCartItem = (req, res) => {
-  const { cartItem } = req;
-  cartItem.deleteOne((err, deletedProduct) => {
-    if (err) {
-      return res.status(400).json({
-        error: "Failed to delete the product",
-      });
-    }
-    return res.json({
-      message: "The product deleted successfully",
+      message: error.message,
     });
-  });
-}
+  }
+};
+
+//create
+exports.createCartItem = async (req, res) => {
+  try {
+    let user = await User.findById(req.userId);
+    let { cartItemId } = req.params;
+    user = extend(user, {
+      cart: concat(user.cart, { item: cartItemId, quantity: 1 }), //update quantity
+    });
+    user.save((err, updatedUser) => {
+      if (err) {
+        return res.status(400).json({
+          message: err.message,
+        });
+      }
+      return res.json(updatedUser.cart);
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+// update
+exports.updateCartItem = async (req, res) => {
+  try {
+    let user = await User.findById(req.userId);
+    let { cartItemId } = req.params;
+    let { quantity } = req.body;
+    user.cart.forEach((data) => {
+      if (data.item == cartItemId) {
+        data.quantity = quantity;
+      }
+    });
+    user.save((err, updatedUser) => {
+      if (err) {
+        return res.status(400).json({
+          message: err.message,
+        });
+      }
+      return res.json(updatedUser.cart);
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};
+
+// delete
+exports.deleteCartItem = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    const { cartItemId } = req.params;
+    let finalCartItems = [];
+    user.cart.forEach((data) => {
+      if (data.item != cartItemId) {
+        finalCartItems.unshift(data);
+      }
+    });
+    user.cart = finalCartItems;
+    user.save((err, updatedUser) => {
+      if (err) {
+        return res.status(400).json({
+          message: err.message,
+        });
+      }
+      return res.json(updatedUser.cart);
+    });
+  } catch (error) {
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+};

@@ -1,105 +1,64 @@
-const Wishlist = require("./model");
-const {extend} = require("lodash");
-exports.getWishlistById = async (req, res, next, wishlistId) => {
-  try {
-    const wishlistItem = await Wishlist.findById(wishlistId);
-    req.wishlistItem = wishlistItem;
-    next();
-  }
-  catch (err) {
-    console.log(err);
-  }
-}
+const User = require("../user/model");
+const { extend, concat } = require("lodash");
 
-// READ
-exports.getOneWishlist = async(req,res)=>{
-  try{
- await res.json(req.wishlistItem)
-  }catch(err){
+//read
+exports.getWishlistItem = async (req, res) => {
+  try {
+    let user = await User.findById(req.userId).populate("wishlist");
+    return res.send(user.wishlist);
+  } catch (error) {
     res.status(400).json({
-      success : "false",
-      message : err.message
-    })
+      message: error.message,
+    });
   }
-}
+};
 
-exports.getWishlists = async (req, res) => {
+//create
+exports.createWishlistItem = async (req, res) => {
   try {
-    const wishlistItems = await Wishlist.find({});
-    return res.json(wishlistItems)
-  }
-  catch (err) {
-    return res.status(400).json({
-      success: "false",
-      error: err.message
-    })
-  }
-}
-
-// CREATE
-exports.createWishlist = async (req, res) => {
-  try {
-    const newWishlist = await new Wishlist(req.body);
-    newWishlist.save((err, wishlist) => {
+    let user = await User.findById(req.userId);
+    let { wishlistId } = req.params;
+    user = extend(user, {
+      wishlist: concat(user.wishlist, wishlistId),
+    });
+    user.save((err, updatedUser) => {
       if (err) {
         return res.status(400).json({
-          success: "false",
-          error: err.message
-        })
+          message: err.message,
+        });
       }
-      res.json(wishlist)
-    })
-  }
-  catch (err) {
-    return res.status(400).json({
-      success: "false",
-      error: err.message
-    })
-  }
-}
-
-// UPDATE
-exports.updateWishlist = async (req, res) => {
-  try {
-    let { wishlistItem } = req;
-    const updatedWishlistItem = req.body;
-    wishlistItem = extend(wishlistItem, updatedWishlistItem);
-   await wishlistItem.save((err,wishlist)=>{
-      if(err){
-        res.status(400).json({
-          success : "false",
-          message : err.message
-        })
-      }
-      res.json(wishlist)
-    })
-  }catch(err){
+      return res.json(updatedUser.wishlist);
+    });
+  } catch (error) {
     res.status(400).json({
-          success : "false",
-          message : err.message
-        })
+      message: error.message,
+    });
   }
-}
+};
 
-// DELETE
-exports.removeWishlist = async(req,res) => {
+// delete
+exports.deleteWishlistItem = async (req, res) => {
   try {
-    let { wishlistItem } = req;
-   await wishlistItem.deleteOne((err,wishlist)=>{
-      if(err){
-        res.status(400).json({
-          success : "false",
-          message : err.message
-        })
+    const user = await User.findById(req.userId);
+    const { wishlistItemId } = req.params;
+    let finalWishlistItems = [];
+    user.wishlist.forEach((data) => {
+      if (data.item != wishlistItemId) {
+        finalWishlistItems.unshift(data);
       }
-      res.json({
-        message : "item deleted successfully!"
-      })
-    })
-  }catch(err){
+    });
+    user.wishlist = finalWishlistItems;
+    user.save((err, updatedUser) => {
+      if (err) {
+        return res.status(400).json({
+          message: err.message,
+        });
+      }
+      return res.json(updatedUser.cart);
+    });
+  } catch (error) {
     res.status(400).json({
-          success : "false",
-          message : err.message
-        })
+      message: error.message,
+    });
   }
-}
+};

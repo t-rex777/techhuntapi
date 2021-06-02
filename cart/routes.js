@@ -1,23 +1,18 @@
 const express = require("express");
 const router = express.Router();
+const { authorizeToken } = require("../user/controller");
 const {
-  getCartItems,
-  getOneCartItem,
   createCartItem,
-  getCartItemById,
+  updateCartItem,
   deleteCartItem,
-  updateCartItem } = require("./controller");
+  getCartItem,
+} = require("./controller");
 
-router.param("cartItemId", getCartItemById);
-
-router.route("/cart")
-  .get(getCartItems)
-  .post(createCartItem)
-
-router.route("/cart/:cartItemId")
-  .get(getOneCartItem)
-  .post(updateCartItem)
-  .delete(deleteCartItem)
-
+router
+  .use(authorizeToken)
+  .get("/cart", getCartItem)
+  .post("/cart/create/:cartItemId", createCartItem)
+  .post("/cart/update/:cartItemId", updateCartItem)
+  .post("/cart/delete/:cartItemId", deleteCartItem);
 
 module.exports = router;

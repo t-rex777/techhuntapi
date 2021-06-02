@@ -1,16 +1,16 @@
 const express = require("express");
 const router = express.Router();
-const {getWishlists,createWishlist,getWishlistById,getOneWishlist,updateWishlist,removeWishlist} = require("./controller");
+const { authorizeToken } = require("../user/controller");
+const {
+  deleteWishlistItem,
+  createWishlistItem,
+  getWishlistItem,
+} = require("./controller");
 
-router.param("wishlistId",getWishlistById);
-
-router.route("/wishlist")
-.get(getWishlists)
-.post(createWishlist);
-
-router.route("/wishlist/:wishlistId")
-.get(getOneWishlist)
-.post(updateWishlist)
-.delete(removeWishlist);
+router
+  .use(authorizeToken)
+  .get("/wishlist", getWishlistItem)
+  .post("/wishlist/create/:wishlistId", createWishlistItem)
+  .post("/wishlist/delete/:wishlistItemId", deleteWishlistItem);
 
 module.exports = router;
