@@ -5,7 +5,7 @@ const {
   getCartItem,
   createCartItem,
   updateCartItem,
-  deleteCartItem
+  deleteCartItem,
 } = require("./cartController");
 
 const {
@@ -15,6 +15,7 @@ const {
   authorizeToken,
   updateUser,
   deleteUser,
+  createAccessToken,
 } = require("./userController");
 
 const {
@@ -24,7 +25,10 @@ const {
 } = require("./wishlistController");
 
 //routes
-router.post("/signup", signUp).post("/signIn", signIn);
+router
+  .get("/token/access", createAccessToken)
+  .post("/signup", signUp)
+  .post("/signin", signIn);
 
 router
   .use(authorizeToken)

@@ -43,7 +43,7 @@ exports.deleteWishlistItem = async (req, res) => {
     const { wishlistItemId } = req.params;
     let finalWishlistItems = [];
     user.wishlist.forEach((data) => {
-      if (data.item != wishlistItemId) {
+      if (data != wishlistItemId) {
         finalWishlistItems.unshift(data);
       }
     });

@@ -28,7 +28,9 @@ exports.authorizeToken = async (req, res, next) => {
 exports.getUser = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
-    return res.send(user);
+    const { _id, name, email, cart, wishlist } = user;
+    const userData = { _id, name, email, cart, wishlist };
+    res.send(userData);
   } catch (error) {
     res.status(400).json({
       message: error.message,
@@ -36,11 +38,11 @@ exports.getUser = async (req, res) => {
   }
 };
 
-
 // Create
 exports.signUp = async (req, res) => {
   try {
     const user = await new User(req.body);
+
     user.save((err, user) => {
       if (err) {
         return res.status(400).json({
@@ -48,7 +50,9 @@ exports.signUp = async (req, res) => {
           message: "User didn't save",
         });
       }
-      res.send(user);
+      const { _id, name, email, cart, wishlist } = user;
+      const userData = { _id, name, email, cart, wishlist };
+      res.send(userData);
     });
   } catch (error) {
     res.status(400).json({
@@ -62,7 +66,6 @@ exports.signIn = async (req, res) => {
     const user = await req.body;
     const { email, password } = user;
     const userEmail = email;
-
     await User.findOne({ email: userEmail }).exec((err, user) => {
       if (err || user === null) {
         return res.status(400).json({
@@ -87,7 +90,9 @@ exports.signIn = async (req, res) => {
           expiresIn: "7d",
         }
       );
-      res.json({ user, accessToken, refreshToken });
+      const { _id, name, email, cart, wishlist } = user;
+      const userData = { _id, name, email, cart, wishlist };
+      res.json({ userData, accessToken, refreshToken });
     });
   } catch (error) {
     res.status(400).json({
@@ -124,7 +129,7 @@ exports.createAccessToken = (req, res) => {
       { userId: userId },
       process.env.ACCESS_TOKEN_SECRET,
       {
-        expiresIn: "1d",
+        expiresIn: "15m",
       }
     );
     res.json({ accessToken, refreshToken });
@@ -134,7 +139,6 @@ exports.createAccessToken = (req, res) => {
     });
   }
 };
-
 
 //Update
 exports.updateUser = async (req, res) => {
@@ -156,8 +160,6 @@ exports.updateUser = async (req, res) => {
     });
   }
 };
-
-
 
 // Delete
 exports.deleteUser = async (req, res) => {
