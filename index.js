@@ -6,6 +6,7 @@ const cors = require("cors");
 const app = express();
 
 const mySecret = process.env.URI;
+const PORT = process.env.PORT || 4000;
 
 //middlewares
 app.use(bodyParser.json());
@@ -34,6 +35,6 @@ app.get("/", (req, res) => {
   res.send("hello world!");
 })
 
-app.listen(4000, (req, res) => {
-  console.log(`server started at 4000`)
+app.listen(PORT, (req, res) => {
+  console.log(`server started at ${PORT}`)
 })
