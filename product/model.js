@@ -7,7 +7,8 @@ const productSchema = new Schema({
   category : String,
   img: String,
   stock: String,
-  delivery: String
+  delivery: String,
+  details:[]
 },{timestamps:true})
 
 module.exports = mongoose.model("Product", productSchema);

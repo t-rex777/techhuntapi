@@ -6,6 +6,8 @@ const {
   createCartItem,
   updateCartItem,
   deleteCartItem,
+  sendStripeToken,
+  clearCart,
 } = require("./cartController");
 
 const {
@@ -40,6 +42,9 @@ router
   .post("/cart/create/:cartItemId", createCartItem)
   .post("/cart/update/:cartItemId", updateCartItem)
   .post("/cart/delete/:cartItemId", deleteCartItem)
+  .post("/cart/clear", clearCart)
+
+  .post("/stripepayment", sendStripeToken)
 
   .get("/wishlist", getWishlistItem)
   .post("/wishlist/create/:wishlistId", createWishlistItem)
